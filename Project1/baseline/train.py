@@ -37,14 +37,13 @@ def train_process(rank, path, model, iterations, device):
                     correct += 1
 
             if (count%2000 == 0):
-                print("[%2d" % rank,
-                    " %2d" % itr,
-                    " %8d]" % count,
-                    "  ITEM LOSS: %6f" % loss.item(), 
+                print("[THREAD: %2d" % rank,
+                    " EPOCH: %2d" % itr,
+                    " BATCH: %7d]" % count,
                     "  ACC: %5f" % (correct*100.0/count),
-                    "  RUNNING LOSS: %6f" % (running_loss / (count+1)))
+                    "  LOSS: %6f" % (running_loss / (count+1)))
 
         print("[%2d" % rank,
             " %2d" % itr,
             " %8d]" % count,
-            " COMPLETED ITR ", itr)
+            "  COMPLETED ITR ", itr)

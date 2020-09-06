@@ -34,4 +34,4 @@ def distribute_data(path, data, labels, batchsize=4):
 
 if __name__ == "__main__":
     dataset = joblib.load("./resized-cifar-100-python/resized-test")
-    distribute_data("./data", dataset[b'data'], dataset[b'fine_labels'])
+    distribute_data("./validation", dataset[b'data'], dataset[b'fine_labels'])
