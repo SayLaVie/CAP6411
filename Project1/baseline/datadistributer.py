@@ -5,7 +5,7 @@ import pickle
 import joblib
 import os
 
-def distribute_data(path, data, labels, batchsize=16):
+def distribute_data(path, data, labels, batchsize=4):
     num = min(len(data), len(labels))
     batches = int(num/batchsize)
 

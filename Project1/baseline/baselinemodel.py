@@ -5,6 +5,7 @@ import joblib
 import numpy as np
 import torchvision.models as models
 from datasets import CIFAR100_Training
+from train import train_process
 
 def build_model():
     # VGG 16 model with output layer resized for 100 classes
@@ -58,56 +59,9 @@ def train_model(path):
     torch.save(model.state_dict(), path)
 
 
-def train_process(rank, path, model, iterations, device):
-    print("DING")
-    dataset = CIFAR100_Training(path)
-    data_generator = torch.utils.data.DataLoader(dataset, shuffle=True, pin_memory=True, num_workers=1)
-
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-
-    for itr in range(iterations):
-        correct = 0
-        count = 0
-        running_loss = 0
-        model.train()
-
-        for x, y in data_generator:
-            x = x.squeeze().to(device)
-            y = y.squeeze().to(device)
-
-            print("X: ", x, "  Y: ", y)
-
-            optimizer.zero_grad() # model.zero_grad() ?
-            y_pred = model(x)
-
-            loss = torch.nn.functional.cross_entropy(y_pred, y)
-            loss.backward()
-            optimizer.step()
-
-            count += 1
-            running_loss += loss.item()
-
-            if (y_pred.argmax().item() == y.item()):
-                correct += 1
-
-            if (count%2000 == 0):
-                print("[%2d" % rank,
-                    " %2d" % itr,
-                    " %8d]" % count,
-                    "  ITEM LOSS: %6f" % loss.item(), 
-                    "  ACC: %5f" % (correct*100.0/count), 
-                    "%%  Y: %5f" % y.item(), 
-                    "  Y_PRED: %5f" % y_pred.argmax().item(),
-                    "  RUNNING LOSS: %6f" % (running_loss / (count+1)))
-
-        print("[%2d" % rank,
-            " %2d" % itr,
-            " %8d]" % count,
-            " COMPLETED ITR ", itr)
-
-
 def train_model_multithreaded(path, workers=2):
     device = torch.device("cuda")
+    torch.cuda.empty_cache()
     torch.manual_seed(1)
     mp.set_start_method("spawn")
 
@@ -118,7 +72,7 @@ def train_model_multithreaded(path, workers=2):
 
     threads = []
     for rank in range(workers):
-        p = mp.Process(target=train_process, args=(rank, path, model, iterations, device))
+        p = mp.Process(target=train_process, args=(rank, "./data", model, iterations, device))
         p.start()
         threads.append(p)
 
@@ -152,4 +106,5 @@ def eval_model(path):
             print("IMG: ", i, "  CORRECT: ", correct, "/", i+1, "  Y: ", y, "  Y_PRED: ", y_pred.argmax())
 
 
-#train_model("./model")
+if __name__ == "__main__":
+    train_model_multithreaded("./gpu_model")
