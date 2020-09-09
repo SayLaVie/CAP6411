@@ -3,4 +3,7 @@
 \#*\#
 .\#*
 
-Project1/baseline/resized-cifar-100-python/*
+*__pycache__*
+
+Project1/data/*
+Project1/models/*

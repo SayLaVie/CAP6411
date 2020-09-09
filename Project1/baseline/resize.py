@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import pickle
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="resize CIFAR")
     parser.add_argument('--input', '-i', type=str, required=True, help='input pickle to resize')
@@ -11,10 +12,12 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def unpickle(file):
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')
     return dict
+
 
 def resize(data):
     print("Old shape: ", data.shape)
@@ -30,20 +33,21 @@ def resize(data):
 
     print("New shape: ", new_images.shape)
     return new_images
-    
+
+
 if __name__ == '__main__':
-   args = parse_args()
+    args = parse_args()
 
-   batch = unpickle(args.input)
-   print(batch.keys())
+    batch = unpickle(args.input)
+    print(batch.keys())
 
-   data = batch[b'data']
-   # filenames = batch[b'filenames']
-   # batch_label = batch[b'batch_label']
-   # fine_labels = batch[b'fine_labels']
-   # course_labels = batch[b'coarse_labels']
+    data = batch[b'data']
+    # filenames = batch[b'filenames']
+    # batch_label = batch[b'batch_label']
+    # fine_labels = batch[b'fine_labels']
+    # course_labels = batch[b'coarse_labels']
 
-   new_images = resize(data)
-   batch[b'data'] = new_images
+    new_images = resize(data)
+    batch[b'data'] = new_images
 
-   joblib.dump(batch, args.output)
+    joblib.dump(batch, args.output)
