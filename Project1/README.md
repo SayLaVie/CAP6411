@@ -5,3 +5,16 @@
 - The default CMD for the image is to execute run-eval.py. You can overwrite this behavior by appendending a different command to the end of `docker run`
     - e.g. `docker run ... baseline /bin/bash`
 - run-inference-eval.sh will run the docker image 5 times with the default CMD and print output to stdout
+
+### run_eval.py in Docker container
+- Instructions as of 9-17-2020
+- The run_eval.py script needs to be run in the pytorch docker container on Xavier. It needs access to the torch2trt repository, as well as the baseline, models, and data/validation directories.
+- The easiest way to get running would be to execute the following command from `/home/dev/project-git/Project1`
+```bash
+docker run -it --rm --runtime nvidia --network host -v $(pwd)/baseline:/infer -v $(pwd)/models:/infer/models -v $(pwd)/data/validation:/infer/validation -v $(pwd)/torch2trt:/torch2trt baseline /bin/bash
+```
+- This will bring you into a shell environment in the `/infer` directory, where you can execute the script with:
+```bash
+python3 run_eval.py
+```
+- You can make edits to `run_eval.py` even while it is mounted in the docker container. That's how I've been doing dev stuff.
