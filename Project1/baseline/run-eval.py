@@ -1,19 +1,25 @@
-from baselinemodel import build_model
+from baselinemodel import build_model, replace_dcf
 from basisModel import basisModel
 from datasets import CIFAR100_Training
 import torch
 import time
+from DCF import *
 
-
-def eval_model(path, compression_factor=0):
+def eval_model(path, compression_factor=0, use_dcf=false):
     device = torch.device("cuda")
     model = build_model().to(device)
     model.load_state_dict(torch.load(path))
 
-    if (compression_factor != 0):
+    if (compression_factor != 0 and use_dcf):
+        replace_dcf(model)
+
+    elif compression_factor != 0:
         compressed_model = basisModel(model, True, True, True)
         compressed_model.update_channels(compression_factor)
-        model = compressed_model.to(device)
+        compressed_model.cuda()
+        model = compressed_model
+
+    print("MODEL: ", model)
 
     # 100x500x64x64x3 Data size (Classes, images, image dimensions)
     dataset = CIFAR100_Training("./validation")
