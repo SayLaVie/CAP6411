@@ -2,13 +2,15 @@ from baselinemodel import build_model, replace_dcf
 from basisModel import basisModel
 from datasets import CIFAR100_Training
 import torch
+from torch2trt import torch2trt
 import time
 from DCF import *
 
-def eval_model(path, compression_factor=0, use_dcf=false):
+def eval_model(path, compression_factor=0, use_dcf=false, as_trt=False):
     device = torch.device("cuda")
     model = build_model().to(device)
     model.load_state_dict(torch.load(path))
+    model.eval()
 
     if (compression_factor != 0 and use_dcf):
         replace_dcf(model)
@@ -21,6 +23,15 @@ def eval_model(path, compression_factor=0, use_dcf=false):
 
     print("MODEL: ", model)
 
+    if as_trt:
+        print("converting to TRT")
+        # torch.Size([4, 3, 64, 64]) is actual input
+        x = torch.rand((4, 3, 224, 224)).cuda()
+        # x = torch.ones((4, 3, 64, 64)).cuda() # errors out
+        model_trt = torch2trt(model, [x], max_batch_size=4)
+        model = model_trt.to(device)
+        print("finished converting to TRT")
+
     # 100x500x64x64x3 Data size (Classes, images, image dimensions)
     dataset = CIFAR100_Training("./validation")
     data_generator = torch.utils.data.DataLoader(dataset, shuffle=True)
@@ -29,7 +40,6 @@ def eval_model(path, compression_factor=0, use_dcf=false):
     count = 0
     running_loss = 0
     start = time.perf_counter()
-    model.eval()
 
     with torch.no_grad():
         for x, y in data_generator:
@@ -52,16 +62,17 @@ def eval_model(path, compression_factor=0, use_dcf=false):
                       "  ACC: %5f" % (correct*100.0/count),
                       "  LOSS: %6f" % (running_loss / (count+1)))
 
-    stop = time.perf_counter()
-    runtime = stop - start
-    print("[%8d]" % count,
-          "  ACC: %5f" % (correct*100.0/count),
-          "  LOSS: %6f" % (running_loss / (count+1)))
+        stop = time.perf_counter()
+        runtime = stop - start
+        print("[%8d]" % count,
+            "  ACC: %5f" % (correct*100.0/count),
+            "  LOSS: %6f" % (running_loss / (count+1)))
 
-    print("Total inference time: %5f seconds" % runtime,
-          "\nFrames per second: %5f" % (count/runtime))
+        print("Total inference time: %5f seconds" % runtime,
+            "\nFrames per second: %5f" % (count/runtime))
 
 
 # TODO: parameterize model to evaluate
 if __name__ == "__main__":
-    eval_model("./models/gpu_model", 0.8)
+    # eval_model("./models/gpu_model", as_trt=True)
+    eval_model("./models/gpu_model")
