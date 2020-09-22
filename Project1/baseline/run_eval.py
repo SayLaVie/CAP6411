@@ -6,7 +6,7 @@ from torch2trt import torch2trt
 import time
 from DCF import *
 
-def eval_model(path, compression_factor=0, use_dcf=false, as_trt=False):
+def eval_model(path, compression_factor=0, use_dcf=False, as_trt=False):
     device = torch.device("cuda")
     model = build_model().to(device)
     model.load_state_dict(torch.load(path))
