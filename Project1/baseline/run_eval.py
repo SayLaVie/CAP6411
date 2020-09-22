@@ -10,7 +10,6 @@ def eval_model(path, compression_factor=0, use_dcf=False, as_trt=False):
     device = torch.device("cuda")
     model = build_model().to(device)
     model.load_state_dict(torch.load(path))
-    model.eval()
 
     if (compression_factor != 0 and use_dcf):
         replace_dcf(model)
@@ -21,7 +20,6 @@ def eval_model(path, compression_factor=0, use_dcf=False, as_trt=False):
         compressed_model.cuda()
         model = compressed_model
 
-    print("MODEL: ", model)
 
     if as_trt:
         print("converting to TRT")
@@ -32,6 +30,9 @@ def eval_model(path, compression_factor=0, use_dcf=False, as_trt=False):
         model = model_trt.to(device)
         print("finished converting to TRT")
 
+    model.eval()
+    print("MODEL: ", model)
+    
     # 100x500x64x64x3 Data size (Classes, images, image dimensions)
     dataset = CIFAR100_Training("./validation")
     data_generator = torch.utils.data.DataLoader(dataset, shuffle=True)
