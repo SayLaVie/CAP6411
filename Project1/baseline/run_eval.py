@@ -21,9 +21,8 @@ def eval_model(path, compression_factor=0, use_dcf=False, as_trt=False):
         model = compressed_model
 
     model.eval()
-
     print("MODEL: ", model)
-
+    
     # 100x500x64x64x3 Data size (Classes, images, image dimensions)
     dataset = CIFAR100_Training("./validation")
     data_generator = torch.utils.data.DataLoader(dataset, shuffle=True)
