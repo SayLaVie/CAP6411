@@ -1,22 +1,24 @@
-from baselinemodel import build_model# , replace_dcf
-from basisModel import basisModel
+from baselinemodel import build_model, replace_dcf
+from basis_compression.basisModel import basisModel
+# from basisModel import basisModel
 from datasets import CIFAR100_Training
-# from DCF import *
+from dcf_net.DCF import *
 import subprocess
 import sys
 import torch
 import torch.autograd.profiler as profiler
 from torch2trt import torch2trt
 
-model_path = "./models/gpu_model"
+model_path = "./models/dcf_model20"
+use_custom_vgg = False
 dataset_path = "./validation"
 device = torch.device("cuda")
 compression_factor = 0
-as_trt = True
+as_trt = False
 trt_fp_16_mode = True
-use_dcf = False
+use_dcf = True
 num_iterations = 1
-run_tegra = False
+run_tegra = True
 
 
 def eval():
@@ -27,14 +29,14 @@ def eval():
 def setup_model():
     global device, model_path, compression_factor, as_trt
 
-    model = build_model().to(device)
+    model = build_model(use_custom_vgg).to(device)
 
-    # if use_dcf:
-    #     replace_dcf(model)
+    if use_dcf:
+        replace_dcf(model)
 
     model.load_state_dict(torch.load(model_path))
 
-    if (compression_factor != 0):
+    if (compression_factor != 0 and not use_dcf):
         compressed_model = basisModel(model, True, True, True)
         compressed_model.update_channels(compression_factor)
         model = compressed_model.to(device)
@@ -123,7 +125,7 @@ def run_infer(model):
 
 def start_tegrastats():
     subprocess.Popen(
-        "sshpass -p {passwd} ssh {user}@{host} {cmd}".format(
+        "sshpass -p {passwd} ssh -o StrictHostKeyChecking=no {user}@{host} {cmd}".format(
             passwd='cv-systems', user='dev', host='192.168.1.3',
             cmd='/home/dev/project-git/Project1/scripts/start-tegrastats.sh'
             ), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -132,7 +134,7 @@ def start_tegrastats():
 
 def stop_tegrastats():
     subprocess.Popen(
-        "sshpass -p {passwd} ssh {user}@{host} {cmd}".format(
+        "sshpass -p {passwd} ssh -o StrictHostKeyChecking=no {user}@{host} {cmd}".format(
             passwd='cv-systems', user='dev', host='192.168.1.3',
             cmd='/home/dev/project-git/Project1/scripts/stop-tegrastats.sh'
             ), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
