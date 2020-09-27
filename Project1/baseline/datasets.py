@@ -18,8 +18,8 @@ class CIFAR100_Training(torch.utils.data.Dataset):
         for index in range(self.length):
             batch_file = open(str(self.path)+"/"+str(index)+".pkl", "rb")
             batch = pickle.load(batch_file)
-            x = self.data_to_tensor(batch["data"])
-            y = self.label_to_tensor(batch["labels"])
+            x = self.data_to_tensor(batch["data"]).to(torch.device("cuda"))
+            y = self.label_to_tensor(batch["labels"]).to(torch.device("cuda"))
             self.items.append((x, y))
 
     def __init__(self, path):

@@ -1,13 +1,22 @@
+# from DCF import *
 import torch
 import torch.multiprocessing as mp
 import torch.nn.functional
 import torchvision.models as models
 from train import train_process
+import vgg
+
+def replace_dcf(module):
+    for a, b in list(module.named_children()):
+        for n, m in list(b.named_children()):
+            if isinstance(m, nn.Conv2d):
+                b._modules[n] = Conv_DCF(m.in_channels, m.out_channels, m.kernel_size[0], stride=m.stride[0], padding=m.padding[0]).cuda()
 
 
 def build_model():
     # VGG 16 model with output layer resized for 100 classes
-    model = models.vgg16_bn(pretrained=True)
+    # model = models.vgg16_bn(pretrained=True)
+    model = vgg.vgg16_bn()  # modified vgg-16 network for TRT conversion
     model.classifier[6] = torch.nn.Linear(4096, 100)
     return model
 
